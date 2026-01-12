@@ -1,5 +1,6 @@
 import { FaArrowUp } from "react-icons/fa";
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
 import { Button } from "./button"
 import { useForm } from 'react-hook-form';
 import type React from "react";
@@ -11,14 +12,20 @@ type FormData = {
 type ChatResponse = {
     message: string;
 }
+type Message = {
+    content: string;
+    role: "user" | "bot"
+}
 
 const ChatBot = () => {
     const coversationId = useRef(crypto.randomUUID());
-    const [messages, setMessages] = useState<string[]>([]);
+    const [messages, setMessages] = useState<Message[]>([]);
     const { register, handleSubmit, reset, formState } = useForm<FormData>();
+    const [isBotTyping, setIsBotTyping] = useState(false);
 
     const onSubmit = async ({ prompt }: FormData) => {
-        setMessages(prev => [...prev, prompt]);
+        setIsBotTyping(true);
+        setMessages(prev => [...prev, { role: 'user', content: prompt }]);
         reset();
 
         const { data } = await axios.post<ChatResponse>("/api/chat", {
@@ -26,7 +33,8 @@ const ChatBot = () => {
             conversationId: coversationId.current
         });
 
-        setMessages(prev => [...prev, data.message]);
+        setIsBotTyping(false);
+        setMessages(prev => [...prev, { role: 'bot', content: data.message }]);
     };
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
@@ -38,8 +46,21 @@ const ChatBot = () => {
 
     return (
         <div>
-            <div>
-                {messages.map((message, index) => <p key={index}>{message}</p>)}
+            <div className="flex flex-col gap-3 mb-10">
+                {messages.map((message, index) => (
+                    <p key={index} className={`px-3 py-1 rounded-xl ${message.role === 'user' ? 'bg-blue-600 text-white self-end' : 'bg-gray-100 text-black self-start'}`}>
+                        <ReactMarkdown>
+                            {message.content}
+                        </ReactMarkdown>
+                    </p>
+                ))}
+                {isBotTyping && (
+                    <div className="flex self-start gap-1 px-3 py-3 bg-gray-200 rounded-xl">
+                        <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse"></div>
+                        <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse [animation-delay: 0.2s]"></div>
+                        <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse [animation-delay: 0.4s]"></div>
+                    </div>
+                )}
             </div>
             <form
                 onSubmit={handleSubmit(onSubmit)}

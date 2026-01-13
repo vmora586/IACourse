@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import { Button } from "./button"
 import { useForm } from 'react-hook-form';
 import type React from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type FormData = {
     prompt: string;
@@ -22,6 +22,11 @@ const ChatBot = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const { register, handleSubmit, reset, formState } = useForm<FormData>();
     const [isBotTyping, setIsBotTyping] = useState(false);
+    const formRef = useRef<HTMLFormElement | null>(null);
+
+    useEffect(() => {
+        formRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [messages]);
 
     const onSubmit = async ({ prompt }: FormData) => {
         setIsBotTyping(true);
@@ -48,7 +53,10 @@ const ChatBot = () => {
         <div>
             <div className="flex flex-col gap-3 mb-10">
                 {messages.map((message, index) => (
-                    <p key={index} className={`px-3 py-1 rounded-xl ${message.role === 'user' ? 'bg-blue-600 text-white self-end' : 'bg-gray-100 text-black self-start'}`}>
+                    <p
+                        key={index}
+                        className={`px-3 py-1 rounded-xl ${message.role === 'user' ? 'bg-blue-600 text-white self-end' : 'bg-gray-100 text-black self-start'}`}
+                    >
                         <ReactMarkdown>
                             {message.content}
                         </ReactMarkdown>
@@ -65,6 +73,7 @@ const ChatBot = () => {
             <form
                 onSubmit={handleSubmit(onSubmit)}
                 onKeyDown={onKeyDown}
+                ref={formRef}
                 className="flex flex-col gap-2 items-end border-2 p-4 rounded-3xl">
                 <textarea
                     {...register('prompt',

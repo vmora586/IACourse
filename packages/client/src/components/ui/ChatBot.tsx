@@ -22,28 +22,37 @@ const ChatBot = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const { register, handleSubmit, reset, formState } = useForm<FormData>();
     const [isBotTyping, setIsBotTyping] = useState(false);
+    const [error, setError] = useState('');
     const lastMessageRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
+        lastMessageRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages]);
 
     const onSubmit = async ({ prompt }: FormData) => {
-        setIsBotTyping(true);
-        setMessages(prev => [...prev, { role: 'user', content: prompt }]);
-        reset();
+        try {
+            setError('');
+            setIsBotTyping(true);
+            setMessages(prev => [...prev, { role: "user", content: prompt }]);
+            reset();
 
-        const { data } = await axios.post<ChatResponse>("/api/chat", {
-            prompt,
-            conversationId: coversationId.current
-        });
+            const { data } = await axios.post<ChatResponse>("/api/chat", {
+                prompt,
+                conversationId: coversationId.current
+            });
 
-        setIsBotTyping(false);
-        setMessages(prev => [...prev, { role: 'bot', content: data.message }]);
+            setMessages(prev => [...prev, { role: "bot", content: data.message }]);
+        } catch (error) {
+            console.error(error);
+            setError("Something went wrong, please try again!!");
+        }
+        finally {
+            setIsBotTyping(false);
+        }
     };
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSubmit(onSubmit)();
         }
@@ -53,7 +62,7 @@ const ChatBot = () => {
         const selection = window.getSelection()?.toString().trim();
         if (selection) {
             e.preventDefault();
-            e.clipboardData.setData('text/plain', selection);
+            e.clipboardData.setData("text/plain", selection);
         }
     };
 
@@ -79,6 +88,7 @@ const ChatBot = () => {
                         <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse [animation-delay: 0.4s]"></div>
                     </div>
                 )}
+                {error && <p className="text-red-500">{error}</p>}
             </div>
             <form
                 onSubmit={handleSubmit(onSubmit)}

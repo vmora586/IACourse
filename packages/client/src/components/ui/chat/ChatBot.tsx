@@ -24,15 +24,15 @@ const ChatBot = () => {
     const [error, setError] = useState('');
     
 
-    const onSubmit = async ({ prompt }: ChatFormData) => {
+    const onSubmit = async ({ prompt: message }: ChatFormData) => {
         try {
             setError('');
             popAudio.play();
             setIsBotTyping(true);
-            setMessages(prev => [...prev, { role: "user", content: prompt }]);
+            setMessages(prev => [...prev, { role: "user", content: message }]);
             
-            const { data } = await axios.post<ChatResponse>("/api/chat", {
-                prompt,
+            const { data } = await axios.post<ChatResponse>("http://localhost:5232/api/chat", {
+                message,
                 conversationId: coversationId.current
             });
 

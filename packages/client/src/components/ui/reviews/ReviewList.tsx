@@ -1,4 +1,5 @@
 import type { ReviewItem } from "./reviews.types";
+import StartRating from "./StartRating";
 
 type ReviewListProps = {
   reviews: ReviewItem[];
@@ -6,6 +7,7 @@ type ReviewListProps = {
 
 
 const ReviewList = ({ reviews }: ReviewListProps) => {
+
   if (!reviews.length) {
     return <p>No reviews available yet.</p>;
   }
@@ -26,10 +28,10 @@ const ReviewList = ({ reviews }: ReviewListProps) => {
 
             <div className="mb-3 flex gap-4 text-sm">
               <span>
-                Professional: <strong>{review.professionalRating.toFixed(1)}/5</strong>
+                Professional: <StartRating value={review.professionalRating} />
               </span>
               <span>
-                Facility: <strong>{review.facilityRating.toFixed(1)}/5</strong>
+                Facility: <StartRating value={review.facilityRating} />
               </span>
             </div>
 

@@ -13,22 +13,8 @@ const formatDate = (value: string) =>
     });
 
 const ReviewSummaryCard = ({
-    summary,
-    isLoading = false,
+    summary
 }: ReviewSummaryCardProps) => {
-    if (isLoading) {
-        return (
-            <section className="rounded-3xl border border-stone-200 bg-white p-6">
-                <div className="animate-pulse space-y-3">
-                    <div className="h-4 w-32 rounded bg-stone-200" />
-                    <div className="h-6 w-full rounded bg-stone-200" />
-                    <div className="h-6 w-5/6 rounded bg-stone-200" />
-                    <div className="h-4 w-48 rounded bg-stone-200" />
-                </div>
-            </section>
-        );
-    }
-
     if (!summary) {
         return (
             <section className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6">

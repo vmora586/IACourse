@@ -1,8 +1,8 @@
 import axios from "axios";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ReviewSummaryCard from "./ReviewSummaryCard";
 import ReviewList from "./ReviewList";
-import type { ReviewsOverviewData } from "./reviews.types";
+import type { ReviewSummaryInfo, ReviewsOverviewData } from "./reviews.types";
 import { ReviewTargetType } from "./reviews.types";
 import ReviewSummaryCardSkeleton from "./ReviewSummaryCardSkeleton";
 import ReviewListSkeleton from "./ReviewListSkeleton";
@@ -15,11 +15,13 @@ type ReviewsOverviewProps = {
 const ReviewsOverview = ({ targetId,
   targetType
 }: ReviewsOverviewProps) => {
+  const queryClient = useQueryClient();
+  const queryKey = ["reviews", targetId, targetType] as const;
 
   const { error, isLoading, data:reviewsData } = useQuery<ReviewsOverviewData>({
-    queryKey: ["reviews", targetId, targetType],
+    queryKey,
     queryFn: async () => {
-      const response = await axios.get<ReviewsOverviewData>("http://localhost:5232/api/reviews/summary/by-targets",
+      const response = await axios.get<ReviewsOverviewData>("http://localhost:5232/api/reviews/summary/by-target",
       {
         params: {
           targetId,
@@ -31,7 +33,30 @@ const ReviewsOverview = ({ targetId,
     }
   });
 
+  const generateSummaryMutation = useMutation({
+    mutationFn: async () => {
+      const response = await axios.post<ReviewSummaryInfo>(
+        "http://localhost:5232/api/reviews/summary",
+        {
+          targetId,
+          targetType,
+        }
+      );
 
+      return response.data;
+    },
+    onSuccess: async (summary) => {
+      queryClient.setQueryData<ReviewsOverviewData>(queryKey, (currentData) => ({
+        summary,
+        reviews: currentData?.reviews ?? [],
+      }));
+
+      await queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const mutationErrorMessage = generateSummaryMutation.error ? "There was an error generating the summary, please try again." : "";
+  
   if (error) {
     return (
       <section className="rounded-3xl border border-red-200 bg-red-50 p-6">
@@ -40,7 +65,7 @@ const ReviewsOverview = ({ targetId,
     );
   }
 
-  if (isLoading || !reviewsData?.summary) {
+  if (isLoading) {
     return (
       <section className="space-y-6">
         <ReviewSummaryCardSkeleton />
@@ -51,7 +76,12 @@ const ReviewsOverview = ({ targetId,
 
   return (
     <section className="space-y-6">
-      <ReviewSummaryCard summary={reviewsData?.summary ?? null} />
+      <ReviewSummaryCard
+        summary={reviewsData?.summary ?? null}
+        isGenerating={generateSummaryMutation.isPending}
+        generateError={mutationErrorMessage}
+        onGenerateSummary={() => generateSummaryMutation.mutate()}
+      />
       <ReviewList reviews={reviewsData?.reviews ?? []} />
     </section>
   );

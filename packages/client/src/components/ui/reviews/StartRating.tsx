@@ -12,8 +12,8 @@ const StartRating = ({ value }: StartRatingProps) => {
             {
                 placeHolders.map((p) => {
                     const diff = value-p;
-                    return diff >= 0 ? <FaStar key={value} /> :
-                        diff >= -0.5 ? <FaStarHalfAlt key={value} /> :
+                    return diff >= 0 ? <FaStar key={p+1} /> :
+                        diff >= -0.5 ? <FaStarHalfAlt key={p+1} /> :
                             <FaRegStar key={value} />
                 })}
         </div >

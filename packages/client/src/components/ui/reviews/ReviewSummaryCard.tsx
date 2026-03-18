@@ -1,8 +1,11 @@
 import type { ReviewSummaryInfo } from "./reviews.types";
+import { IoSparklesSharp } from "react-icons/io5";
 
 type ReviewSummaryCardProps = {
     summary: ReviewSummaryInfo | null;
-    isLoading?: boolean;
+    isGenerating?: boolean;
+    generateError?: string | null;
+    onGenerateSummary: () => void;
 }
 
 const formatDate = (value: string) =>
@@ -13,7 +16,10 @@ const formatDate = (value: string) =>
     });
 
 const ReviewSummaryCard = ({
-    summary
+    summary,
+    isGenerating = false,
+    generateError,
+    onGenerateSummary,
 }: ReviewSummaryCardProps) => {
     if (!summary) {
         return (
@@ -24,7 +30,22 @@ const ReviewSummaryCard = ({
                 <p className="mt-2 text-sm leading-6 text-stone-500">
                     Reviews exist, but a generated summary is not available for this entity yet.
                 </p>
+                <button
+                    className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
+                    disabled={isGenerating}
+                    onClick={onGenerateSummary}
+                    type="button"
+                >
+                    <IoSparklesSharp className={`h-4 w-4 ${isGenerating ? "animate-spin" : ""}`} />
+                    {isGenerating ? "Generating summary..." : "Generate Summary"}
+                </button>
+                {generateError ? (
+                    <p className="mt-3 text-sm font-medium text-red-600">
+                        {generateError}
+                    </p>
+                ) : null}
             </section>
+
         );
     }
 

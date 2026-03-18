@@ -34,3 +34,8 @@ export type ReviewsOverviewData = {
   summary: ReviewSummaryInfo | null;
   reviews: ReviewItem[];
 };
+
+export type ReviewSummaryTarget = {
+    targetId: string;
+    targetType: ReviewTargetType;
+};

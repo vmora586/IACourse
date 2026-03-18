@@ -1,51 +1,25 @@
-import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ReviewSummaryCard from "./ReviewSummaryCard";
 import ReviewList from "./ReviewList";
-import type { ReviewSummaryInfo, ReviewsOverviewData } from "./reviews.types";
-import { ReviewTargetType } from "./reviews.types";
+import type { ReviewSummaryInfo, ReviewSummaryTarget, ReviewsOverviewData } from "./reviews.types";
 import ReviewSummaryCardSkeleton from "./ReviewSummaryCardSkeleton";
 import ReviewListSkeleton from "./ReviewListSkeleton";
+import { generateReviewSummary, getReviewsOverview } from "./review.service";
 
-type ReviewsOverviewProps = {
-  targetId: string;
-  targetType: ReviewTargetType;
-};
 
-const ReviewsOverview = ({ targetId,
-  targetType
-}: ReviewsOverviewProps) => {
+
+  const ReviewsOverview = ({ targetId, targetType }: ReviewSummaryTarget) => {
   const queryClient = useQueryClient();
   const queryKey = ["reviews", targetId, targetType] as const;
 
-  const { error, isLoading, data:reviewsData } = useQuery<ReviewsOverviewData>({
+  const getReviewsQuery = useQuery<ReviewsOverviewData>({
     queryKey,
-    queryFn: async () => {
-      const response = await axios.get<ReviewsOverviewData>("http://localhost:5232/api/reviews/summary/by-target",
-      {
-        params: {
-          targetId,
-          targetType
-        },
-      }
-    );
-    return response.data;
-    }
+    queryFn: () => getReviewsOverview({ targetId, targetType }),
   });
 
-  const generateSummaryMutation = useMutation({
-    mutationFn: async () => {
-      const response = await axios.post<ReviewSummaryInfo>(
-        "http://localhost:5232/api/reviews/summary",
-        {
-          targetId,
-          targetType,
-        }
-      );
-
-      return response.data;
-    },
-    onSuccess: async (summary) => {
+const generateSummaryMutation = useMutation({
+    mutationFn: () => generateReviewSummary({ targetId, targetType }),
+    onSuccess: async (summary: ReviewSummaryInfo) => {
       queryClient.setQueryData<ReviewsOverviewData>(queryKey, (currentData) => ({
         summary,
         reviews: currentData?.reviews ?? [],
@@ -56,8 +30,8 @@ const ReviewsOverview = ({ targetId,
   });
 
   const mutationErrorMessage = generateSummaryMutation.error ? "There was an error generating the summary, please try again." : "";
-  
-  if (error) {
+
+  if (getReviewsQuery.error) {
     return (
       <section className="rounded-3xl border border-red-200 bg-red-50 p-6">
         <p className="text-sm font-medium text-red-700">There was an error fetching the reviews, please try again</p>
@@ -65,7 +39,7 @@ const ReviewsOverview = ({ targetId,
     );
   }
 
-  if (isLoading) {
+  if (getReviewsQuery.isLoading) {
     return (
       <section className="space-y-6">
         <ReviewSummaryCardSkeleton />
@@ -77,12 +51,12 @@ const ReviewsOverview = ({ targetId,
   return (
     <section className="space-y-6">
       <ReviewSummaryCard
-        summary={reviewsData?.summary ?? null}
+        summary={getReviewsQuery.data?.summary ?? null}
         isGenerating={generateSummaryMutation.isPending}
         generateError={mutationErrorMessage}
         onGenerateSummary={() => generateSummaryMutation.mutate()}
       />
-      <ReviewList reviews={reviewsData?.reviews ?? []} />
+      <ReviewList reviews={getReviewsQuery.data?.reviews ?? []} />
     </section>
   );
 }
